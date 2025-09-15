@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Bean;
 import ch.qos.logback.classic.Logger;
 import fi.haagahelia.hanifbookstore.domain.Book;
 import fi.haagahelia.hanifbookstore.domain.BookRepository;
+import fi.haagahelia.hanifbookstore.domain.Category;
+import fi.haagahelia.hanifbookstore.domain.CategoryRepository;
 
 @SpringBootApplication
 public class HanifbookstoreApplication {
@@ -19,15 +21,22 @@ public class HanifbookstoreApplication {
 	}
 
 	@Bean
-	public CommandLineRunner demo(BookRepository repository) {
+	public CommandLineRunner demo(BookRepository bookRepository, CategoryRepository categoryRepository) {
 		return (args) -> {
 
-			log.info("save a couple of books");
-			repository.save(new Book("A Farewell to Arms", "Ernest Hemingway", 1929, "1232323-21", 19.95));
-			repository.save(new Book("Animal Farm", "George Orwell", 1945, "2212343-5", 29.95));
+			Category fiction = new Category("Fiction");
+			Category fantasy = new Category("Fantasy");
+			Category horror = new Category("Horror");
+
+			categoryRepository.save(fiction);
+			categoryRepository.save(fantasy);
+			categoryRepository.save(horror);
+
+			bookRepository.save(new Book("A Farewell to Arms", "Ernest Hemingway", 1929, "1232323-21", 19.95, fiction));
+			bookRepository.save(new Book("Animal Farm", "George Orwell", 1945, "2212343-5", 29.95, fiction));
 
 			log.info("fetch all books");
-			for (Book book : repository.findAll()) {
+			for (Book book : bookRepository.findAll()) {
 				log.info(book.toString());
 			}
 		};
