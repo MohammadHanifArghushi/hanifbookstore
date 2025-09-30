@@ -3,6 +3,7 @@ package fi.haagahelia.hanifbookstore.web;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,6 +44,7 @@ public class BookController {
         return "redirect:booklist";
     }
 
+    @Secured("ROLE_ADMIN")
     @GetMapping("/delete/{id}")
     public String deleteBook(@PathVariable("id") Long bookId, Model model) {
         bookRepository.deleteById(bookId);
@@ -64,6 +66,11 @@ public class BookController {
     @GetMapping("/api/books/{id}")
     public @ResponseBody Optional<Book> findBookRest(@PathVariable("id") Long bookId) {
         return bookRepository.findById(bookId);
+    }
+
+    @GetMapping("/login")
+    public String login() {
+        return "login";
     }
 
 }
