@@ -1,5 +1,8 @@
 package fi.haagahelia.hanifbookstore.web;
 
+import fi.haagahelia.hanifbookstore.service.UserDetailServiceImpl;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -12,59 +15,75 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(securedEnabled = true)
+@EnableMethodSecurity(securedEnabled = true, prePostEnabled = true)
 public class WebSecurityConfig {
 
-    @Bean
-    public SecurityFilterChain configure(HttpSecurity http) throws Exception {
-        http
-                .authorizeHttpRequests(authorize -> authorize
+        @Autowired
+        private UserDetailServiceImpl userDetailsService;
 
-                        .requestMatchers("/h2-console/**").permitAll()
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 
-                        .anyRequest().authenticated())
-                .csrf(csrf -> csrf
+        @Bean
+        public DaoAuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder) {
+                DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
 
-                        .ignoringRequestMatchers("/h2-console/**"))
-                .headers(headers -> headers
+                authProvider.setUserDetailsService(userDetailsService);
 
-                        .frameOptions(frameOptions -> frameOptions.sameOrigin()))
-                .formLogin(formLogin -> formLogin
+                authProvider.setPasswordEncoder(passwordEncoder);
 
-                        .loginPage("/login")
+                return authProvider;
+        }
 
-                        .permitAll())
-                .logout(logout -> logout
+        @Bean
+        public SecurityFilterChain configure(HttpSecurity http) throws Exception {
+                http
+                                .authorizeHttpRequests(authorize -> authorize
 
-                        .permitAll());
-        return http.build();
-    }
+                                                .requestMatchers("/css/**", "/h2-console/**").permitAll()
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+                                                .anyRequest().authenticated())
+                                .csrf(csrf -> csrf
 
-    @Bean
-    public UserDetailsService userDetailsService() {
+                                                .ignoringRequestMatchers("/h2-console/**"))
+                                .headers(headers -> headers
 
-        PasswordEncoder encoder = passwordEncoder();
+                                                .frameOptions(frameOptions -> frameOptions.disable()))
+                                .formLogin(formLogin -> formLogin
 
-        UserDetails user = User.builder()
-                .username("user")
-                .password(encoder.encode("123"))
-                .roles("USER")
-                .build();
+                                                .loginPage("/login")
+                                                .defaultSuccessUrl("/booklist", true)
+                                                .permitAll())
+                                .logout(logout -> logout
 
-        UserDetails admin = User.builder()
-                .username("admin")
-                .password(encoder.encode("321"))
-                .roles("USER", "ADMIN")
-                .build();
+                                                .permitAll());
+                return http.build();
+        }
 
-        return new InMemoryUserDetailsManager(user, admin);
-    }
+        @Bean
+        public UserDetailsService userDetailsService() {
+
+                PasswordEncoder encoder = passwordEncoder();
+
+                UserDetails user = User.builder()
+                                .username("user")
+                                .password(encoder.encode("userpassword"))
+                                .roles("USER")
+                                .build();
+
+                UserDetails admin = User.builder()
+                                .username("admin")
+                                .password(encoder.encode("adminpassword"))
+                                .roles("USER", "ADMIN")
+                                .build();
+
+                return new InMemoryUserDetailsManager(user, admin);
+        }
+
 }
